@@ -35,7 +35,6 @@ class Generator
     end
 
     def to_html
-      #require 'byebug'; byebug
       if children.any?
         [
           shift + open_tag + line_break,
@@ -70,8 +69,8 @@ class Generator
         return true
       else
         return @children.any? do |child|
-          if child.is_a?(Tag)
-            child.change(names[1..-1], &block)
+          if child.is_a?(Tag) && child.name == names.first
+            child.change(*names[1..-1], &block)
           end
         end
       end
@@ -92,7 +91,11 @@ class Generator
   end
 
   def self.html(&block)
-    Tag.new('html', &block).to_html
+    run(&block).to_html
+  end
+
+  def self.run(&block)
+    Tag.new('html', &block)
   end
 
 end
@@ -115,6 +118,31 @@ class GeneratorTest < Test::Unit::TestCase
 </html>
 HTML
   end
+
+  def test_change
+    result = Generator.run do
+      tag(:h1) { text "hello1" }
+      tag(:h2) { text "hello2" }
+    end
+    result.change(:h1) do
+      tag(:strong) do
+        text("zz")
+      end
+    end
+    assert_equal <<HTML, result.to_html
+<html>
+  <h1>
+    <strong>
+      zz
+    </strong>
+  </h1>
+  <h2>
+    hello2
+  </h2>
+</html>
+HTML
+  end
+
   def test_generate
     result =  Generator.html do
       tag(:h1) do

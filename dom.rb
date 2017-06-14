@@ -1,68 +1,5 @@
-result =  Generator.html do
-  tag(:h1) do
-    text("hello")
-  end
-  tag(:p) do
-    tag(:strong) do
-      text("lorem ipsum")
-    end
-    tag(:br)
-    text("dolor et")
-  end
-end
-
-result.change(:p, :strong) do
-  tag(:em) do
-    text("change")
-  end
-end
-
-result.to_html
 
 
-
-
-#Generator.html do
-  #tag(:h1)
-  #tag(:h2)
-  #text("zz")
-#end
-
-#tag(:a) do
-  #...
-#end
-
-=begin
-<a>
- ...
-</a>
-=end
-
-tag(:a) { tag(:strong) }
-
-#tag :p do
-  #tag :strong
-  #tag :strong
-#end
-#tag :p do
-  #tag :strong
-#end
-#tag :p do
-  #tag :strong
-#end
-
-=begin
-<p>
-  <strong>
-    Text
-  </strong>
-  faksjdfsa
-</p>
-=end
-
-result.to_html
-
-#
 #%html
   #%h1
     #Hello
@@ -73,25 +10,49 @@ result.to_html
     #dolor et
 
 class Generator
-  class Tag
-    attr_accessort :name, :children, :level
+
+  class Node
+    attr_accessor :level
+
+    def shift
+      "  " * level
+    end
+
+    def line_break
+      "\n"
+    end
+  end
+
+  class Tag < Node
+
+    attr_accessor :name, :children, :level
+
     def initialize(name, level = 0, &block)
       @name = name
       @level = level
       @children = []
-      instance_eval(&block)
+      instance_eval(&block) if block
     end
 
     def to_html
-      [
-        shift + "<#{name}>",
-        children.map(&:to_html),
-        shift + "</#{name}>",
-      ].join("\n")
+      #require 'byebug'; byebug
+      if children.any?
+        [
+          shift + open_tag + line_break,
+          children.map(&:to_html),
+          shift + close_tag + line_break,
+        ].join
+      else
+        shift + open_tag + close_tag + line_break
+      end
     end
 
-    def shift
-      "  " * level
+    def open_tag
+      "<#{name}>"
+    end
+
+    def close_tag
+      "</#{name}>"
     end
 
     def tag(name, &block)
@@ -117,16 +78,69 @@ class Generator
     end
   end
 
-  class Text
-    attr_accessort :string
+  class Text < Node
+    attr_accessor :string
+
+    def initialize(string, level = 0)
+      @string = string
+      @level = level
+    end
 
     def to_html
-      string
+      shift + string + line_break
     end
   end
 
-  def html(&block)
+  def self.html(&block)
     Tag.new('html', &block).to_html
   end
 
+end
+
+require 'test/unit'
+
+class GeneratorTest < Test::Unit::TestCase
+  def test_generate_single_tag
+
+    result =  Generator.html do
+      tag(:h1) do
+        text("hello")
+      end
+    end
+    assert_equal <<HTML, result
+<html>
+  <h1>
+    hello
+  </h1>
+</html>
+HTML
+  end
+  def test_generate
+    result =  Generator.html do
+      tag(:h1) do
+        text("hello")
+      end
+      tag(:p) do
+        tag(:strong) do
+          text("lorem ipsum")
+        end
+        tag(:br)
+        text("dolor et")
+      end
+    end
+    assert_equal <<HTML, result
+<html>
+  <h1>
+    hello
+  </h1>
+  <p>
+    <strong>
+      lorem ipsum
+    </strong>
+    <br></br>
+    dolor et
+  </p>
+</html>
+HTML
+  end
 end

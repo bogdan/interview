@@ -129,17 +129,25 @@ HTML
         text("zz")
       end
     end
-    assert_equal <<HTML, result.to_html
-<html>
+    assert_equal <<HTML, result.children.first.to_html
   <h1>
     <strong>
       zz
     </strong>
   </h1>
-  <h2>
-    hello2
-  </h2>
-</html>
+HTML
+
+    result.change(:h1, :strong) do
+      tag(:em) { text("hello") }
+    end
+    assert_equal <<HTML, result.children.first.to_html
+  <h1>
+    <strong>
+      <em>
+        hello
+      </em>
+    </strong>
+  </h1>
 HTML
   end
 

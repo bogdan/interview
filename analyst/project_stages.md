@@ -18,7 +18,12 @@ CREATE TABLE `stages` (
 
 ``` sql
 SELECT p.name, final.deadline FROM projects p 
-  LEFT JOIN stages final ON p.stage_id = f.id 
-  LEFT JOIN stages ON stages.id = p.stage_id AND stages.priority > f.priority
-WHERE s.id IS NULL
+  LEFT JOIN stages final ON p.stage_id = final.id 
+WHERE NOT EXISTS(select * from stages WHERE stages.priority > final.priority)
+
+
+SELECT p.name, final.deadline FROM projects p 
+  LEFT JOIN stages final ON p.stage_id = final.id 
+  LEFT JOIN stages ON stages.id = p.stage_id AND stages.priority > final.priority
+WHERE stages.id IS NULL
 ```

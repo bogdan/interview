@@ -1,8 +1,5 @@
-def pick(x, y)
 
-
-
-end
+# Solution
 
 LINES = [
   [[0,0], [0,1], [0,2]],
